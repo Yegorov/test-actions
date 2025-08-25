@@ -1,0 +1,15 @@
+name: Example Push Workflow
+
+on:
+  - push
+
+jobs:
+  first:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout repo'
+        uses: actions/checkout@v4
+      - name: Say hello
+        shell: bash
+        run: |
+          ruby ./hello.rb
