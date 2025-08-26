@@ -1,0 +1,12 @@
+on:
+  workflow_dispatch:
+
+jobs:
+  time:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+      - run: >-
+          ruby -e 'require "time"; puts Time.at(Time.now, in: Time.zone_offset("+03:00"))'
