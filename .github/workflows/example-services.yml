@@ -1,0 +1,78 @@
+name: Example services
+
+on:
+  - push
+
+jobs:
+  example-services:
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis
+        ports:
+          - 5551:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5552:5432
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+      elasticsearch:
+        image: elasticsearch:8.19.2
+        ports:
+          - 5553:9200
+        env:
+          ES_JAVA_OPTS: "-Xms1g -Xmx1g"
+          discovery.type: single-node
+          xpack.security.enabled: false
+        options: >-
+          --health-cmd "curl http://localhost:9200/_cluster/health"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - if: ${{ env.ACT }}
+        run: >-
+          sudo apt-get update &&
+          sudo apt-get install --no-install-recommends -y curl postgresql-client
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+
+      #- run: sudo createdb -h localhost -p 5552 test_pg
+      - run: psql -h localhost -p 5552 -U postgres -c 'CREATE DATABASE test_pg;'
+        env:
+          PGPASSWORD: postgres
+
+      - run: curl -X GET "localhost:5553/_cluster/health?pretty"
+      - run: curl -X GET "localhost:5553/_nodes/stats/jvm,os,fs?pretty"
+      - run: curl -sS "localhost:5553/_cat/nodes?h=heap*&v"
+
+      - run: bundle exec ruby ./services.rb
+        env:
+          REDIS_HOST: localhost
+          REDIS_PORT: 5551
+          PG_HOST: localhost
+          PG_PORT: 5552
+          PG_USER: postgres
+          PG_PASSWORD: postgres
+          PG_DBNAME: test_pg
+          ELASTIC_URL: http://localhost:5553
+
