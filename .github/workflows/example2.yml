@@ -1,0 +1,29 @@
+name: Example2 Push Workflow
+
+on:
+  - push
+
+jobs:
+  first:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+
+      - name: Say hello from bin/hello
+        run: bin/hello
+
+      - name: Say hello from ./hello.rb
+        shell: bash
+        run: |
+          ruby ./hello.rb
+  second:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+      - run: ruby -e 'puts "hello"'
